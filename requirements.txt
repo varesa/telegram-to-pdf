@@ -1,3 +1,5 @@
 opencv-python
 matplotlib
 numpy
+python-telegram-bot
+requests

@@ -66,7 +66,7 @@ def get_line_angle_offset(image):
             if abs(angle) < ANGLE_THRESHOLD:
                 angles.append(angle)
 
-    plt.imshow(im_lines)
+    #plt.imshow(im_lines)
     plt.show()
 
     return np.average(angles)
@@ -85,7 +85,7 @@ def get_bounding_rect(image):
         method=cv.CHAIN_APPROX_SIMPLE,
     )
 
-    max_area = None
+    """max_area = None
     max_contour = None
     for contour in contours:
         area = cv.contourArea(contour)
@@ -93,25 +93,46 @@ def get_bounding_rect(image):
             max_area = area
             max_contour = contour
 
-    """
-    im_contours = im_rotated * 0
+    im_contours = image * 0
     cv.drawContours(
         image=im_contours,
-        contours=max_contour,
+        contours=contours,
         contourIdx=-1,
-        color=(0, 255, 0),
-        thickness=3,
+        color=(255, 0, 0),
+        thickness=5,
     )
+    
+    print(max_contour)
 
-    plt.imshow(im_contours)
+    plt.imshow(im_contours, 'gray')
     plt.show()
-    """
 
-    return cv.boundingRect(max_contour)
+    return cv.boundingRect(max_contour)"""
+
+    CONTOUR_THRESHOLD = 200_000
+
+    min_x = max_x = min_y = max_y = None
+    for contour in contours:
+        if cv.contourArea(contour) < CONTOUR_THRESHOLD:
+            continue
+        for point in contour:
+            x, y = point[0]
+            if not min_x or x < min_x:
+                min_x = x
+            if not max_x or x > max_x:
+                max_x = x
+
+            if not min_y or y < min_y:
+                min_y = y
+            if not max_y or y > max_y:
+                max_y = y
+
+    print(min_x, max_x - min_x, min_y, max_y - min_y)
+    return min_x, min_y, max_x - min_x, max_y - min_y
 
 
-def fix_image(path):
-    im = cv.imread(path)
+def fix_image(input, output):
+    im = cv.imread(input)
     im_gs, im_threshold = filter_image(im)
 
     correction = get_line_angle_offset(im_threshold)
@@ -124,7 +145,7 @@ def fix_image(path):
     cv.rectangle(im_rotated, (x, y), (x + w, y + h), (255, 0, 0), 3)
     im_cropped = im_rotated[y:y + h, x:x + w]
 
-    plt.imshow(im_cropped)
+    plt.imshow(im_rotated)
     plt.show()
 
-    return im_cropped
+    cv.imwrite(output, im_cropped)
