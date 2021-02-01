@@ -14,7 +14,8 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 def start(update, context):
     context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text="Hello. Please start by sending one or more pictures, followed by /roll")
+        text="Hello. Please start by sending one or more pictures, followed by /roll - "
+             "Source: https://github.com/varesa/telegram-to-pdf (BETA)")
 
 
 def get_largest_photo(photo_sizes):
