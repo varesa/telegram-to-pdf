@@ -96,8 +96,6 @@ def fix_image(input, output):
     im_rotated_gs, im_rotated_threshold = filter_image(im_rotated)
 
     x, y, w, h = get_bounding_rect(im_rotated_threshold)
-
-    cv.rectangle(im_rotated, (x, y), (x + w, y + h), (255, 0, 0), 3)
     im_cropped = im_rotated[y:y + h, x:x + w]
 
     plt.imshow(im_rotated)
