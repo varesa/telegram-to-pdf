@@ -12,7 +12,9 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 
 def start(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="Hello. Please send an album of images.")
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Hello. Please start by sending one or more pictures, followed by /roll")
 
 
 def get_largest_photo(photo_sizes):
@@ -44,31 +46,42 @@ def message(update, context):
     print(update)
 
 
+def download_file(url, path):
+    response = requests.get(url)
+    with open(path, 'wb') as file:
+        file.write(response.content)
+    return path
+
+
+def make_pdf(original_file):
+    pdf_file = original_file + '.pdf'
+    subprocess.call(['convert', original_file, '-density', '300', pdf_file])
+    return pdf_file
+
+
+def process_job(urls, bot, chat_id):
+    with tempfile.TemporaryDirectory() as temp:
+        bot.send_message(chat_id=chat_id, text='Processing:')
+        pdf_pages = []
+        for index, url in enumerate(urls):
+            original_image = download_file(url, os.path.join(temp, str(index)))
+            fixed_image = original_image + '-fix.png'
+            fix_image(original_image, fixed_image)
+            with open(fixed_image, 'rb') as f:
+                bot.send_photo(chat_id=chat_id, photo=f)
+            pdf_pages.append(make_pdf(original_image))
+        pdf_file = os.path.join(temp, 'out.pdf')
+        subprocess.call(['qpdf', '--empty', '--pages'] + pdf_pages + ['--', pdf_file])
+        with open(pdf_file, 'rb') as f:
+            bot.send_document(chat_id=chat_id, document=f)
+
+
 def roll(update, context):
     chat_id = update.effective_chat.id
     if chat_id in chat_pictures.keys():
         urls = chat_pictures[chat_id]
-        with tempfile.TemporaryDirectory() as temp:
-            context.bot.send_message(chat_id=chat_id, text='Processing:')
-            pdf_pages = []
-            for index, url in enumerate(urls):
-                response = requests.get(url)
-                original_image = os.path.join(temp, str(index))
-                fixed_image = original_image + '-fix.png'
-                with open(original_image, 'wb') as file:
-                    file.write(response.content)
-                fix_image(original_image, fixed_image)
-                with open(fixed_image, 'rb') as f:
-                    context.bot.send_photo(chat_id=chat_id, photo=f)
-                pdf_page = original_image + '.pdf'
-                subprocess.call(['convert', fixed_image, '-density', '300', pdf_page])
-                pdf_pages.append(pdf_page)
-            pdf_file = os.path.join(temp, 'out.pdf')
-            print(['qpdf', '--empty', '--pages'] + pdf_pages + ['--', pdf_file])
-            print(' '.join(['qpdf', '--empty', '--pages'] + pdf_pages + ['--', pdf_file]))
-            subprocess.call(['qpdf', '--empty', '--pages'] + pdf_pages + ['--', pdf_file])
-            with open(pdf_file, 'rb') as f:
-                context.bot.send_document(chat_id=chat_id, document=f)
+        process_job(urls, context.bot, chat_id)
+        chat_pictures[chat_id].clear()
 
 
 def main():
@@ -82,5 +95,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    #fix_image('/tmp/image.png', '/tmp/image2.png')
-

@@ -3,27 +3,18 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
+THRESHOLD_OFFSET = -20
+ANGLE_THRESHOLD = 15
+CONTOUR_THRESHOLD = 200_000
+
+
 def filter_image(image):
     grayscale = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
-    THRESHOLD_OFFSET = -20
     cutoff = np.percentile(grayscale.ravel(), 50) + THRESHOLD_OFFSET
-    print("cutoff:", cutoff)
-
-    ret, threshold = cv.threshold(grayscale, cutoff, 255, cv.THRESH_BINARY)
+    _, threshold = cv.threshold(grayscale, cutoff, 255, cv.THRESH_BINARY)
 
     return grayscale, threshold
-
-
-"""
-        edges,
-        rho=2,
-        theta=np.pi / 180,
-        threshold=200,
-        lines=np.array([]),
-        minLineLength=100,
-        maxLineGap=20,
-"""
 
 
 def get_lines(image):
@@ -32,9 +23,6 @@ def get_lines(image):
         threshold1=75,
         threshold2=500,
     )
-    # plt.imshow(edges, 'binary')
-    # plt.show()
-    # print(edges)
 
     lines = cv.HoughLinesP(
         edges,
@@ -47,9 +35,6 @@ def get_lines(image):
     )
 
     return lines
-
-
-ANGLE_THRESHOLD = 15
 
 
 def get_line_angle_offset(image):
@@ -65,9 +50,6 @@ def get_line_angle_offset(image):
                 angle += -90 * np.sign(angle)
             if abs(angle) < ANGLE_THRESHOLD:
                 angles.append(angle)
-
-    #plt.imshow(im_lines)
-    plt.show()
 
     return np.average(angles)
 
@@ -85,32 +67,6 @@ def get_bounding_rect(image):
         method=cv.CHAIN_APPROX_SIMPLE,
     )
 
-    """max_area = None
-    max_contour = None
-    for contour in contours:
-        area = cv.contourArea(contour)
-        if not max_area or area > max_area:
-            max_area = area
-            max_contour = contour
-
-    im_contours = image * 0
-    cv.drawContours(
-        image=im_contours,
-        contours=contours,
-        contourIdx=-1,
-        color=(255, 0, 0),
-        thickness=5,
-    )
-    
-    print(max_contour)
-
-    plt.imshow(im_contours, 'gray')
-    plt.show()
-
-    return cv.boundingRect(max_contour)"""
-
-    CONTOUR_THRESHOLD = 200_000
-
     min_x = max_x = min_y = max_y = None
     for contour in contours:
         if cv.contourArea(contour) < CONTOUR_THRESHOLD:
@@ -127,7 +83,6 @@ def get_bounding_rect(image):
             if not max_y or y > max_y:
                 max_y = y
 
-    print(min_x, max_x - min_x, min_y, max_y - min_y)
     return min_x, min_y, max_x - min_x, max_y - min_y
 
 
