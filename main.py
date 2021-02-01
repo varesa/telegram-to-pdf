@@ -69,7 +69,7 @@ def process_job(urls, bot, chat_id):
             fix_image(original_image, fixed_image)
             with open(fixed_image, 'rb') as f:
                 bot.send_photo(chat_id=chat_id, photo=f)
-            pdf_pages.append(make_pdf(original_image))
+            pdf_pages.append(make_pdf(fixed_image))
         pdf_file = os.path.join(temp, 'out.pdf')
         subprocess.call(['qpdf', '--empty', '--pages'] + pdf_pages + ['--', pdf_file])
         with open(pdf_file, 'rb') as f:
