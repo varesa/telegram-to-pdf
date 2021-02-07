@@ -81,8 +81,11 @@ def roll(update, context):
     chat_id = update.effective_chat.id
     if chat_id in chat_pictures.keys():
         urls = chat_pictures[chat_id]
-        process_job(urls, context.bot, chat_id)
-        chat_pictures[chat_id].clear()
+        if len(urls) > 0:
+            process_job(urls, context.bot, chat_id)
+            chat_pictures[chat_id].clear()
+        else:
+            context.bot.send_message(chat_id=chat_id, text='No images to process')
 
 
 def main():
